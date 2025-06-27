@@ -37,9 +37,6 @@ dfTips["time"].value_counts() #? Cuenta el número de clientes por hora (almuerz
 numtips = dfTips.select_dtypes(include=[np.number])
 sns.heatmap(numtips.corr(), annot=True, cmap='coolwarm')
 
-sns.catplot(x="day", y="total_bill", data=dfTips)
-sns.catplot(x="day", y="total_bill", data=dfTips, kind="swarm", hue="sex")
-
 #! 2. Histograma de la cuenta total
 #? Muestra la distribución de los montos de las cuentas
 sns.histplot(dfTips["total_bill"], bins=20, kde=True)
@@ -64,3 +61,10 @@ plt.title("Cuenta total promedio por día y sexo")
 plt.xlabel("Día")
 plt.ylabel("Cuenta total promedio")
 plt.show()
+
+
+sns.catplot(x="day", y="total_bill", data=dfTips, kind="swarm", hue="sex")
+sns.catplot(x="smoker", y="tip", data=dfTips, order=["No", "Yes"])
+sns.catplot(x="day", y="total_bill", data=dfTips, kind="box", hue="smoker")
+sns.catplot(x="day", y="total_bill", data=dfTips, kind="violin", hue="sex", split=True)
+sns.catplot(x="day", y="total_bill", data=dfTips, kind="swarm", hue="smoker", col="time", aspect= .7)
