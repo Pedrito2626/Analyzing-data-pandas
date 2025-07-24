@@ -337,139 +337,20 @@ fig.text(
 
 # Mostrar la figura final
 plt.show()
-# 🎯 ANÁLISIS DE CLUSTERING: SEGMENTACIÓN DE CLIENTES
-# Preparamos los datos para el clustering, usaremos la edad de los clientes y el beneficio que generan
-
+#! Hay que preparar los datos para el clustering, usaremos la edad de los clientes y el beneficio que generan como características
 x = df[["Customer_Age", "Profit"]]
-print("📊 Datos originales:")
-print(f"Edad - Rango: {x['Customer_Age'].min():.0f} a {x['Customer_Age'].max():.0f}")
-print(f"Profit - Rango: ${x['Profit'].min():,.0f} a ${x['Profit'].max():,.0f}")
-
-# 📏 PASO 1: NORMALIZACIÓN DE DATOS (StandardScaler)
 """
-🔧 ¿QUÉ HACE StandardScaler?
-- Convierte los datos para que tengan media = 0 y desviación estándar = 1
-- Fórmula: (valor - media) / desviación_estándar
-- Ejemplo: Si edad está en rango 18-65 y profit en rango -1000 a 5000,
-  el algoritmo podría darle más importancia al profit por tener valores más grandes
+Escalar las características para que tengan la misma importancia en el clustering
+El escalado consiste en cambiar los rangos de los datos, por ejemplo, 
+si un campo tiene valores entre 0 y 100 y otro entre 0 y 1000, el segundo campo tendrá más peso en el clustering. 
+Para evitar esto, escalamos los datos para que todos estén en un rango similar. 
+Al escalar se pueden reducir o aumentar los valores de los datos.
 """
-
 scaler = StandardScaler()
-# fit_transform() hace dos cosas:
-# 1. fit(): Calcula la media y desviación estándar de cada columna
-# 2. transform(): Aplica la normalización usando esas estadísticas
 x_scaled = scaler.fit_transform(x)
-
-print("\n📏 Datos después del escalado (StandardScaler):")
-print(
-    f"Edad escalada - Media: {x_scaled[:, 0].mean():.3f}, Std: {x_scaled[:, 0].std():.3f}"
-)
-print(
-    f"Profit escalado - Media: {x_scaled[:, 1].mean():.3f}, Std: {x_scaled[:, 1].std():.3f}"
-)
-
-# 🔍 PASO 2: MÉTODO DEL CODO PARA ENCONTRAR K ÓPTIMO
-"""
-🎯 ¿QUÉ ES EL MÉTODO DEL CODO?
-- Prueba diferentes números de clusters (k=1, 2, 3, etc.)
-- Para cada k, calcula la "inercia" (suma de distancias al cuadrado)
-- La inercia mide qué tan "compactos" están los clusters
-- El k óptimo está donde la inercia deja de disminuir significativamente (forma un "codo")
-"""
-
-inercias = []  # Lista para guardar las inercias de cada k
-print("\n🔄 Probando diferentes números de clusters...")
-
-for k in range(1, 8):
-    # Crear el modelo K-Means con k clusters
-    kmeans = KMeans(
-        n_clusters=k,  # Número de clusters a crear
-        init="k-means++",  # Método inteligente para inicializar centroides
-        random_state=42,  # Semilla para reproducibilidad
-    )
-
-    # Entrenar el modelo con los datos escalados
+#? Encontramos el número optimo de grupos utilizando k el metodo del codo
+axes = []
+for i in range(1, 8):
+    kmeans = KMeans(n_clusters=i,init='k-means++', random_state=42)
     kmeans.fit(x_scaled)
-
-    # Guardar la inercia (suma de distancias cuadráticas a los centroides)
-    inercias.append(kmeans.inertia_)
-    print(f"   K={k}: Inercia = {kmeans.inertia_:.2f}")
-
-print(f"\n📈 Inercias calculadas: {inercias}")
-
-# 📊 VISUALIZACIÓN DEL MÉTODO DEL CODO
-plt.figure(figsize=(12, 8))
-
-# Subplot 1: Gráfico del codo
-plt.subplot(2, 2, 1)
-plt.plot(
-    range(1, 8),
-    inercias,
-    "bo-",
-    linewidth=3,
-    markersize=8,
-    markerfacecolor="red",
-    markeredgecolor="white",
-    markeredgewidth=2,
-)
-plt.title("📈 Método del Codo para K-Means", fontsize=14, fontweight="bold")
-plt.xlabel("Número de Clusters (k)", fontsize=12)
-plt.ylabel("Inercia (WCSS)", fontsize=12)
-plt.grid(True, alpha=0.3)
-
-# Marcar el punto del codo (generalmente k=3 o k=4)
-plt.annotate(
-    "Posible codo",
-    xy=(3, inercias[2]),
-    xytext=(4, inercias[2] + 1000),
-    arrowprops=dict(arrowstyle="->", color="red", lw=2),
-    fontsize=11,
-    fontweight="bold",
-    color="red",
-)
-
-# Subplot 2: Comparación antes y después del escalado
-plt.subplot(2, 2, 2)
-plt.scatter(x["Customer_Age"], x["Profit"], alpha=0.6, c="blue", s=20)
-plt.title("🔍 Datos Originales (Sin Escalar)", fontsize=14, fontweight="bold")
-plt.xlabel("Edad del Cliente")
-plt.ylabel("Profit ($)")
-plt.grid(True, alpha=0.3)
-
-plt.subplot(2, 2, 3)
-plt.scatter(x_scaled[:, 0], x_scaled[:, 1], alpha=0.6, c="green", s=20)
-plt.title("📏 Datos Escalados (StandardScaler)", fontsize=14, fontweight="bold")
-plt.xlabel("Edad Escalada (μ=0, σ=1)")
-plt.ylabel("Profit Escalado (μ=0, σ=1)")
-plt.grid(True, alpha=0.3)
-
-# Subplot 4: Estadísticas comparativas
-plt.subplot(2, 2, 4)
-plt.axis("off")
-stats_text = f"""
-ESTADÍSTICAS COMPARATIVAS
-
-DATOS ORIGINALES:
-• Edad: {x["Customer_Age"].min():.0f} - {x["Customer_Age"].max():.0f} años
-• Profit: ${x["Profit"].min():,.0f} - ${x["Profit"].max():,.0f}
-
-DATOS ESCALADOS:
-• Edad: {x_scaled[:, 0].min():.2f} - {x_scaled[:, 0].max():.2f}
-• Profit: {x_scaled[:, 1].min():.2f} - {x_scaled[:, 1].max():.2f}
-
-BENEFICIOS DEL ESCALADO:
-• Ambas variables tienen la misma importancia
-• Evita que el profit domine por sus valores grandes
-• Mejora la convergencia del algoritmo
-"""
-plt.text(
-    0.1,
-    0.9,
-    stats_text,
-    fontsize=10,
-    verticalalignment="top",
-    bbox=dict(boxstyle="round,pad=0.5", facecolor="#E8F6F3", alpha=0.8),
-)
-
-plt.tight_layout()
-plt.show()
+    axes.append(kmeans.inertia_)
